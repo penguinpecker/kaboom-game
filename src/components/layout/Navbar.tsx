@@ -1,9 +1,11 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAccount } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 import { useModal } from "@/hooks/useModal";
+import { useVaultBalance, useVaultHealth, useRiskLevel, useWhaleAlertCount } from "@/hooks/useContracts";
 import { useState, useRef, useEffect } from "react";
+import { formatEther } from "viem";
 import { MobileDrawer } from "./MobileDrawer";
 
 const NAV_LINKS = [
@@ -14,14 +16,30 @@ const NAV_LINKS = [
   { href: "/vault", label: "Vault" },
 ];
 
+const RISK_LABELS = ["Healthy", "Caution", "Emergency"];
+
 export function Navbar() {
   const pathname = usePathname();
   const { address, isConnected } = useAccount();
+  const { data: balanceData } = useBalance({ address });
   const { open } = useModal();
   const [showMobile, setShowMobile] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  // Real on-chain data
+  const { data: vaultBal } = useVaultBalance();
+  const { data: vaultHealth } = useVaultHealth();
+  const { data: riskLevel } = useRiskLevel();
+  const { data: whaleCount } = useWhaleAlertCount();
+
   const shortAddr = address ? `${address.slice(0, 4)}…${address.slice(-3)}` : "";
+  const walletBal = balanceData ? Number(formatEther(balanceData.value)).toFixed(2) : "0.00";
+  const riskIdx = riskLevel !== undefined ? Number(riskLevel) : 0;
+
+  // Fix hydration mismatch — only render wallet-dependent UI after mount
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -59,44 +77,43 @@ export function Navbar() {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          {isConnected && (
+          {mounted && isConnected && (
             <div className="flex items-center gap-2 px-4 py-1.5 bg-surface-container-highest rounded-lg border border-outline-variant/20">
               <span className="w-2 h-2 rounded-full bg-emerald" />
-              <span className="font-headline text-sm font-bold text-primary tracking-wide">2,450 STT</span>
+              <span className="font-headline text-sm font-bold text-primary tracking-wide">{walletBal} STT</span>
             </div>
           )}
           <button onClick={() => isConnected ? open("profile") : open("wallet")}
             className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-5 py-2 font-headline text-xs font-bold uppercase tracking-widest hover:shadow-[0_0_15px_rgba(164,201,255,0.4)] transition-all active:scale-95 flex items-center gap-2">
-            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{isConnected ? "person" : "account_balance_wallet"}</span>
-            <span className="hidden sm:inline">{isConnected ? shortAddr : "Connect"}</span>
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{mounted && isConnected ? "person" : "account_balance_wallet"}</span>
+            <span className="hidden sm:inline">{mounted && isConnected ? shortAddr : "Connect"}</span>
           </button>
+
+          {/* Notifications — real on-chain data */}
           <div className="relative" ref={notifRef}>
             <button onClick={() => setShowNotif(!showNotif)} className="relative p-2 hover:bg-surface-container-highest rounded-lg transition-all">
               <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: 22 }}>notifications</span>
-              <span className="absolute top-1 right-1 w-2 h-2 bg-tertiary-container rounded-full" />
+              {mounted && whaleCount && Number(whaleCount) > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-tertiary-container rounded-full" />
+              )}
             </button>
             {showNotif && (
-              <div className="absolute right-0 top-12 w-80 bg-surface-container-low border border-outline-variant/15 shadow-[0_8px_32px_rgba(0,0,0,.6)] z-50 animate-slide-down">
+              <div className="absolute right-0 top-12 w-80 bg-surface-container-low border border-outline-variant/15 shadow-[0_8px_32px_rgba(0,0,0,.6)] z-50">
                 <div className="px-4 py-3 border-b border-outline-variant/10 flex justify-between items-center">
-                  <span className="font-headline text-xs font-bold tracking-widest uppercase text-primary">Reactive Events</span>
-                  <span className="font-headline text-[10px] text-on-surface-variant">Live</span>
+                  <span className="font-headline text-xs font-bold tracking-widest uppercase text-primary">Reactive Status</span>
+                  <span className="font-headline text-[10px] text-on-surface-variant">On-Chain</span>
                 </div>
                 <div className="max-h-[260px] overflow-y-auto">
-                  {[
-                    { icon: "shield", color: "text-emerald", label: "RISK GUARDIAN", msg: "MaxBet adjusted to 482 STT — vault health 94.2%", time: "2m ago" },
-                    { icon: "priority_high", color: "text-amber", label: "WHALE ALERT", msg: "Large bet 2,400 STT from 0x7a2…", time: "5m ago" },
-                    { icon: "leaderboard", color: "text-secondary", label: "LEADERBOARD", msg: "SHADOW_X → #2 (115.4×)", time: "12m ago" },
-                    { icon: "group", color: "text-primary", label: "REFERRAL", msg: "+4.5 STT credited from 0xf1c…", time: "18m ago" },
-                  ].map((e, i) => (
-                    <div key={i} className="px-4 py-3 border-b border-outline-variant/[0.05] hover:bg-surface-container/40">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`material-symbols-outlined mi ${e.color}`} style={{ fontSize: 16 }}>{e.icon}</span>
-                        <span className={`font-headline text-[10px] ${e.color} tracking-widest`}>{e.label}</span>
-                      </div>
-                      <p className="text-xs text-on-surface-variant">{e.msg}</p>
-                      <span className="font-headline text-[9px] text-on-surface-variant/40">{e.time}</span>
-                    </div>
-                  ))}
+                  <NotifRow icon="shield" color="text-emerald" label="RISK GUARDIAN"
+                    msg={`Risk level: ${RISK_LABELS[riskIdx] || "Unknown"} — Vault health: ${vaultHealth ? vaultHealth.toString() : "—"}%`} />
+                  <NotifRow icon="account_balance" color="text-primary" label="VAULT"
+                    msg={`Balance: ${vaultBal ? Number(formatEther(vaultBal)).toFixed(2) : "—"} STT`} />
+                  <NotifRow icon="visibility" color="text-amber" label="WHALE ALERTS"
+                    msg={`${whaleCount ? whaleCount.toString() : "0"} whale events detected`} />
+                  <NotifRow icon="emoji_events" color="text-secondary" label="LEADERBOARD"
+                    msg="Auto-ranked via ReactiveLeaderboard" />
+                  <NotifRow icon="group" color="text-tertiary" label="REFERRAL"
+                    msg="1% auto-credit on every referred bet" />
                 </div>
               </div>
             )}
@@ -108,5 +125,17 @@ export function Navbar() {
       </header>
       {showMobile && <MobileDrawer onClose={() => setShowMobile(false)} />}
     </>
+  );
+}
+
+function NotifRow({ icon, color, label, msg }: { icon: string; color: string; label: string; msg: string }) {
+  return (
+    <div className="px-4 py-3 border-b border-outline-variant/[0.05]">
+      <div className="flex items-center gap-2 mb-1">
+        <span className={`material-symbols-outlined mi ${color}`} style={{ fontSize: 16 }}>{icon}</span>
+        <span className={`font-headline text-[10px] ${color} tracking-widest`}>{label}</span>
+      </div>
+      <p className="text-xs text-on-surface-variant">{msg}</p>
+    </div>
   );
 }
