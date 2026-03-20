@@ -10,7 +10,7 @@ import { ModalRoot } from "@/components/modals/ModalRoot";
 
 export const metadata: Metadata = {
   title: "KABOOM! — On-Chain Mines on Somnia",
-  description: "Provably fair 4×4 Mines game with autonomous reactive risk management. Zero backend. Somnia Testnet.",
+  description: "Provably fair 4×4 Mines with reactive risk management. Zero backend.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

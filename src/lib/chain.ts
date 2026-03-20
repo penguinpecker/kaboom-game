@@ -13,14 +13,14 @@ export const somniaTestnet = defineChain({
   testnet: true,
 });
 
-// Contract addresses (will be updated after deployment)
+// Contract addresses — deployed on Somnia Testnet
 export const CONTRACTS = {
-  KaboomGame: "0x0000000000000000000000000000000000000000" as `0x${string}`,
-  KaboomVault: "0x0000000000000000000000000000000000000000" as `0x${string}`,
-  ReactiveRiskGuardian: "0x0000000000000000000000000000000000000000" as `0x${string}`,
-  ReactiveLeaderboard: "0x0000000000000000000000000000000000000000" as `0x${string}`,
-  ReactiveReferral: "0x0000000000000000000000000000000000000000" as `0x${string}`,
-  ReactiveWhaleAlert: "0x0000000000000000000000000000000000000000" as `0x${string}`,
+  KaboomGame: "0x9b0A46e35FB743eD366077ce16C497eFeEd37E2F" as `0x${string}`,
+  KaboomVault: "0x9c1aF3D3741542019f3A3C6C33eD3638db07A18b" as `0x${string}`,
+  ReactiveRiskGuardian: "0x208C305F9D1794461d7069be1003e7e979C38e3F" as `0x${string}`,
+  ReactiveLeaderboard: "0x82F67Bec332c7A49D73C8078bdD72A4E381968fd" as `0x${string}`,
+  ReactiveReferral: "0xb655A2d9b4242CfBE33fB95F6aeD8AF2A387d3B1" as `0x${string}`,
+  ReactiveWhaleAlert: "0x5CE39982b73BA6ba21d5B649CE61A283615F4A4E" as `0x${string}`,
 } as const;
 
 // Game config constants

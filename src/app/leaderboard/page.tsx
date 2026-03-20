@@ -1,100 +1,115 @@
 "use client";
-import { randomName } from "@/lib/utils";
-import { useState } from "react";
-
-const LEADERS = [
-  { r: 1, n: "OPERATOR_12", w: "12,000", m: "42.0", s: "ELITE" },
-  { r: 2, n: "SHADOW_X", w: "8,450", m: "115.4", s: "ACTIVE" },
-  { r: 3, n: "GHOST_CMD", w: "7,120", m: "12.5", s: "ACTIVE" },
-  { r: 4, n: "KRYPTO_K", w: "5,900", m: "54.0", s: "ACTIVE" },
-  { r: 5, n: "NEON_TIGER", w: "4,200", m: "8.2", s: "ACTIVE" },
-  { r: 6, n: "WRAITH_99", w: "3,800", m: "6.1", s: "ACTIVE" },
-  { r: 7, n: "SPECTRE_X", w: "2,900", m: "15.8", s: "ACTIVE" },
-];
-
-const LIVE_OPS = Array.from({ length: 4 }, () => ({
-  name: randomName(),
-  payout: Math.floor(Math.random() * 3000) + 100,
-  mult: (Math.random() * 20 + 1).toFixed(1),
-  time: `${Math.floor(Math.random() * 30) + 2}s`,
-}));
+import { useLeaderboard, usePlayerStats, useGameCounter } from "@/hooks/useContracts";
+import { useAccount } from "wagmi";
+import { formatEther } from "viem";
 
 export default function LeaderboardPage() {
-  const [tab, setTab] = useState("Daily");
-  const tabs = ["Daily", "Weekly", "All-Time"];
+  const { address } = useAccount();
+  const { data: leaders } = useLeaderboard();
+  const { data: myStats } = usePlayerStats(address);
+  const { data: gameCount } = useGameCounter();
 
   return (
-    <div className="px-3 md:px-5 pb-8 min-h-screen">
-      <div className="flex justify-between items-end mb-5 mt-2">
+    <div className="px-6 lg:px-8 pb-16 min-h-screen">
+      <div className="flex justify-between items-end mb-8">
         <div>
           <p className="font-headline text-[10px] tracking-[.12em] text-on-surface-variant flex items-center gap-1 mb-0.5">
-            <span className="status-dot" />REACTIVE AUTO-RANKED
+            <span className="status-dot" />REACTIVE AUTO-RANKED ON-CHAIN
           </p>
-          <h1 className="font-headline text-2xl md:text-3xl font-black italic tracking-tighter text-on-surface">
+          <h1 className="font-headline text-3xl font-black italic tracking-tighter text-on-surface">
             GLOBAL <span className="text-primary">LEADERBOARD</span>
           </h1>
         </div>
+        <div className="font-headline text-sm text-on-surface-variant">
+          Total Games: <span className="text-secondary font-bold">{gameCount ? gameCount.toString() : "—"}</span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
-        {/* Table */}
-        <div className="bg-surface-container-low border border-outline-variant/[0.06] stealth-card">
-          <div className="flex justify-between items-center px-4 py-2.5 border-b border-outline-variant/[0.06]">
-            <h2 className="font-headline text-[10px] font-bold tracking-widest text-on-surface uppercase flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-amber text-sm mi">emoji_events</span>Rankings
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
+        {/* Rankings Table */}
+        <div className="bg-surface-container-low border border-outline-variant/10 stealth-card">
+          <div className="px-5 py-3 border-b border-outline-variant/10">
+            <h2 className="font-headline text-xs font-bold tracking-widest text-white uppercase flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-amber mi" style={{ fontSize: 18 }}>emoji_events</span>Rankings
             </h2>
-            <div className="flex gap-1">
-              {tabs.map((t) => (
-                <button key={t} onClick={() => setTab(t)} className={`px-2 py-0.5 text-[10px] font-headline font-bold tracking-widest transition-colors ${t === tab ? "bg-primary/[0.08] text-primary border border-primary/[0.12]" : "text-on-surface-variant/40 hover:text-on-surface"}`}>{t}</button>
-              ))}
-            </div>
           </div>
-          <div className="grid grid-cols-5 px-4 py-1.5 border-b border-outline-variant/[0.06]">
-            {["Rank", "Operator", "Win", "Mult", "Status"].map((h) => (
-              <span key={h} className="font-headline text-[10px] tracking-widest text-on-surface-variant/40 uppercase">{h}</span>
-            ))}
+          <div className="grid grid-cols-4 px-5 py-2 border-b border-outline-variant/10">
+            <span className="font-headline text-[10px] tracking-widest text-on-surface-variant/40 uppercase">Rank</span>
+            <span className="font-headline text-[10px] tracking-widest text-on-surface-variant/40 uppercase">Player</span>
+            <span className="font-headline text-[10px] tracking-widest text-on-surface-variant/40 uppercase">Biggest Win</span>
+            <span className="font-headline text-[10px] tracking-widest text-on-surface-variant/40 uppercase text-right">Best Mult</span>
           </div>
-          {LEADERS.map((d) => (
-            <div key={d.r} className="grid grid-cols-5 px-4 py-3 items-center hover:bg-surface-container/25 border-b border-outline-variant/[0.04]">
-              <span className={`w-6 h-6 rounded-full font-headline font-bold text-[10px] flex items-center justify-center ${d.r === 1 ? "bg-amber/10 text-amber" : d.r <= 3 ? "bg-on-surface-variant/[0.06] text-on-surface-variant/60" : "bg-surface-container-highest text-on-surface-variant/40"}`}>#{d.r}</span>
-              <span className={`font-headline text-[10px] text-on-surface ${d.r === 1 ? "font-bold" : ""}`}>{d.n}</span>
-              <span className="font-headline text-[10px] text-primary">{d.w}</span>
-              <span className="font-headline text-[10px] text-secondary">{d.m}×</span>
-              <span className={`px-1.5 py-0.5 font-headline text-[10px] tracking-widest w-fit ${d.s === "ELITE" ? "bg-tertiary-container/[0.08] text-tertiary" : "bg-primary/[0.06] text-primary"}`}>{d.s}</span>
+          {leaders ? (
+            ([...leaders] as any[]).map((entry: any, i: number) => {
+              if (entry.player === "0x0000000000000000000000000000000000000000") return null;
+              return (
+                <div key={i} className="grid grid-cols-4 px-5 py-3 items-center hover:bg-surface-container/30 border-b border-outline-variant/[0.04]">
+                  <span className={`w-7 h-7 rounded-full font-headline font-bold text-[10px] flex items-center justify-center ${i === 0 ? "bg-amber/10 text-amber" : i < 3 ? "bg-on-surface-variant/[0.06] text-on-surface-variant/60" : "bg-surface-container-highest text-on-surface-variant/40"}`}>
+                    #{i + 1}
+                  </span>
+                  <span className="font-headline text-xs text-on-surface font-mono">
+                    {entry.player.slice(0, 6)}…{entry.player.slice(-4)}
+                  </span>
+                  <span className="font-headline text-xs text-primary font-bold">
+                    {Number(formatEther(entry.biggestWin)).toFixed(3)} STT
+                  </span>
+                  <span className="font-headline text-xs text-secondary font-bold text-right">
+                    {(Number(entry.biggestMultiplier) / 1e18).toFixed(2)}×
+                  </span>
+                </div>
+              );
+            })
+          ) : (
+            <div className="px-5 py-8 text-center text-on-surface-variant text-sm">
+              No games played yet. Be the first!
             </div>
-          ))}
+          )}
+          {leaders && !([...leaders] as any[]).some((e: any) => e.player !== "0x0000000000000000000000000000000000000000") && (
+            <div className="px-5 py-8 text-center text-on-surface-variant text-sm">
+              No winners yet. Start playing to appear here!
+            </div>
+          )}
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-3">
-          <div className="bg-surface-container-low border border-outline-variant/[0.06] p-4">
-            <div className="flex items-center gap-1.5 mb-2.5">
-              <span className="status-dot" />
-              <span className="font-headline text-[10px] font-bold tracking-widest text-on-surface uppercase">Live Wins</span>
-            </div>
-            <div className="space-y-2">
-              {LIVE_OPS.map((op, i) => (
-                <div key={i} className={`flex justify-between items-start py-1.5 ${i < 3 ? "border-b border-outline-variant/[0.04]" : ""}`}>
-                  <div>
-                    <div className="font-headline text-[11px] font-bold text-on-surface">{op.name}</div>
-                    <div className="font-headline text-[11px] font-bold text-primary">+{op.payout} STT</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-headline text-[10px] text-on-surface-variant/30">{op.time}</div>
-                    <span className="px-1 py-0.5 bg-secondary/[0.06] text-secondary font-headline text-[10px]">{op.mult}×</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* My Stats */}
+        <div className="space-y-4">
+          <div className="bg-surface-container-low p-5 border border-outline-variant/10">
+            <h3 className="font-headline text-xs font-bold tracking-widest text-white uppercase mb-4">Your Stats</h3>
+            {address && myStats ? (
+              <div className="space-y-3">
+                <StatRow label="Total Won" value={Number(formatEther((myStats as any).totalWon)).toFixed(3) + " STT"} color="text-primary" />
+                <StatRow label="Games Won" value={(myStats as any).gamesWon.toString()} color="text-secondary" />
+                <StatRow label="Biggest Win" value={Number(formatEther((myStats as any).biggestWin)).toFixed(3) + " STT"} color="text-tertiary" />
+                <StatRow label="Best Mult" value={(Number((myStats as any).biggestMultiplier) / 1e18).toFixed(2) + "×"} color="text-amber" />
+              </div>
+            ) : (
+              <p className="text-sm text-on-surface-variant">
+                {address ? "No games played yet." : "Connect wallet to see your stats."}
+              </p>
+            )}
           </div>
 
-          <div className="bg-gradient-to-br from-secondary-container/20 to-surface-container-high p-4 border border-secondary/[0.08]">
-            <h3 className="font-headline text-sm font-black italic text-on-surface mb-1">STEALTH REWARDS</h3>
-            <p className="text-[11px] text-on-surface-variant mb-2.5">Top 10 weekly earn bonus STT drops.</p>
-            <button className="w-full py-1.5 border border-on-surface/[0.12] font-headline font-bold text-[10px] tracking-widest text-on-surface hover:bg-white/5 transition-colors">JOIN PROTOCOL</button>
+          <div className="bg-gradient-to-br from-secondary-container/20 to-surface-container-high p-5 border border-secondary/10">
+            <h3 className="font-headline text-base font-black italic text-on-surface mb-1">REACTIVE RANKING</h3>
+            <p className="text-xs text-on-surface-variant mb-3">
+              Leaderboard updates automatically via Somnia Reactivity when GameWon events fire. No backend needed.
+            </p>
+            <a href={`https://shannon-explorer.somnia.network/address/${CONTRACTS_ADDR}`} target="_blank" rel="noreferrer"
+              className="font-headline text-[10px] text-primary hover:underline">View contract on explorer →</a>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+const CONTRACTS_ADDR = "0x82F67Bec332c7A49D73C8078bdD72A4E381968fd";
+
+function StatRow({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div className="flex justify-between py-1.5 border-b border-outline-variant/[0.05]">
+      <span className="text-xs text-on-surface-variant/50">{label}</span>
+      <span className={`text-xs font-bold ${color}`}>{value}</span>
     </div>
   );
 }
