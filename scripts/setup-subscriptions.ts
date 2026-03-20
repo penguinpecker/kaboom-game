@@ -1,4 +1,5 @@
-import { ethers } from "hardhat";
+import pkg from "hardhat";
+const { ethers } = pkg;
 
 // Somnia Reactivity Precompile address
 const REACTIVITY_PRECOMPILE = "0x0000000000000000000000000000000000000100";

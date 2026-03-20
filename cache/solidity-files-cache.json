@@ -1,0 +1,383 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/Users/penguinpecker/Documents/kaboom-app/contracts/KaboomGame.sol": {
+      "lastModificationDate": 1774041044901,
+      "contentHash": "ab2fe41d18f850cbd5c3b9645457beb5",
+      "sourceName": "contracts/KaboomGame.sol",
+      "solcConfig": {
+        "version": "0.8.30",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./KaboomVault.sol"
+      ],
+      "versionPragmas": [
+        "0.8.30"
+      ],
+      "artifacts": [
+        "KaboomGame"
+      ]
+    },
+    "/Users/penguinpecker/Documents/kaboom-app/contracts/KaboomVault.sol": {
+      "lastModificationDate": 1774041044902,
+      "contentHash": "2314d350b1c6cc0bd32441a1e02f41a1",
+      "sourceName": "contracts/KaboomVault.sol",
+      "solcConfig": {
+        "version": "0.8.30",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.30"
+      ],
+      "artifacts": [
+        "KaboomVault"
+      ]
+    },
+    "/Users/penguinpecker/Documents/kaboom-app/contracts/ReactiveWhaleAlert.sol": {
+      "lastModificationDate": 1774041044902,
+      "contentHash": "91e411525fa79fcb3cb872e86d88a23b",
+      "sourceName": "contracts/ReactiveWhaleAlert.sol",
+      "solcConfig": {
+        "version": "0.8.30",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@somnia-chain/reactivity-contracts/contracts/SomniaEventHandler.sol",
+        "./KaboomVault.sol",
+        "./ReactiveRiskGuardian.sol"
+      ],
+      "versionPragmas": [
+        "0.8.30"
+      ],
+      "artifacts": [
+        "ReactiveWhaleAlert"
+      ]
+    },
+    "/Users/penguinpecker/Documents/kaboom-app/contracts/ReactiveRiskGuardian.sol": {
+      "lastModificationDate": 1774041044903,
+      "contentHash": "15c1a5a27d1b2199f41feb63c0aed31d",
+      "sourceName": "contracts/ReactiveRiskGuardian.sol",
+      "solcConfig": {
+        "version": "0.8.30",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@somnia-chain/reactivity-contracts/contracts/SomniaEventHandler.sol",
+        "./KaboomVault.sol"
+      ],
+      "versionPragmas": [
+        "0.8.30"
+      ],
+      "artifacts": [
+        "ReactiveRiskGuardian"
+      ]
+    },
+    "/Users/penguinpecker/Documents/kaboom-app/node_modules/@somnia-chain/reactivity-contracts/contracts/SomniaEventHandler.sol": {
+      "lastModificationDate": 1774041061824,
+      "contentHash": "dd88246ece2d5293e6ae048b29d8cfde",
+      "sourceName": "@somnia-chain/reactivity-contracts/contracts/SomniaEventHandler.sol",
+      "solcConfig": {
+        "version": "0.8.30",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./interfaces/ISomniaEventHandler.sol",
+        "./interfaces/ISomniaReactivityPrecompile.sol",
+        "./interfaces/IERC165.sol"
+      ],
+      "versionPragmas": [
+        "0.8.30"
+      ],
+      "artifacts": [
+        "SomniaEventHandler"
+      ]
+    },
+    "/Users/penguinpecker/Documents/kaboom-app/node_modules/@somnia-chain/reactivity-contracts/contracts/interfaces/ISomniaEventHandler.sol": {
+      "lastModificationDate": 1774041061817,
+      "contentHash": "c99d196bb1d0cf15b02b477fe1f4588c",
+      "sourceName": "@somnia-chain/reactivity-contracts/contracts/interfaces/ISomniaEventHandler.sol",
+      "solcConfig": {
+        "version": "0.8.30",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.30"
+      ],
+      "artifacts": [
+        "ISomniaEventHandler"
+      ]
+    },
+    "/Users/penguinpecker/Documents/kaboom-app/node_modules/@somnia-chain/reactivity-contracts/contracts/interfaces/ISomniaReactivityPrecompile.sol": {
+      "lastModificationDate": 1774041061820,
+      "contentHash": "ed918fb1f84a8e576aa7e0dbfeaebf19",
+      "sourceName": "@somnia-chain/reactivity-contracts/contracts/interfaces/ISomniaReactivityPrecompile.sol",
+      "solcConfig": {
+        "version": "0.8.30",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.30"
+      ],
+      "artifacts": [
+        "ISomniaReactivityPrecompile",
+        "SomniaExtensions"
+      ]
+    },
+    "/Users/penguinpecker/Documents/kaboom-app/node_modules/@somnia-chain/reactivity-contracts/contracts/interfaces/IERC165.sol": {
+      "lastModificationDate": 1774041061816,
+      "contentHash": "e6b82ee7d5c0c7af0ef86ae34bcfc298",
+      "sourceName": "@somnia-chain/reactivity-contracts/contracts/interfaces/IERC165.sol",
+      "solcConfig": {
+        "version": "0.8.30",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.30"
+      ],
+      "artifacts": [
+        "IERC165"
+      ]
+    },
+    "/Users/penguinpecker/Documents/kaboom-app/contracts/ReactiveReferral.sol": {
+      "lastModificationDate": 1774041044902,
+      "contentHash": "90c7bb421dde3a29a04e00ac1710a234",
+      "sourceName": "contracts/ReactiveReferral.sol",
+      "solcConfig": {
+        "version": "0.8.30",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@somnia-chain/reactivity-contracts/contracts/SomniaEventHandler.sol"
+      ],
+      "versionPragmas": [
+        "0.8.30"
+      ],
+      "artifacts": [
+        "ReactiveReferral"
+      ]
+    },
+    "/Users/penguinpecker/Documents/kaboom-app/contracts/ReactiveLeaderboard.sol": {
+      "lastModificationDate": 1774041044901,
+      "contentHash": "eb808d5dda039fd0ba6036bd8e3397c7",
+      "sourceName": "contracts/ReactiveLeaderboard.sol",
+      "solcConfig": {
+        "version": "0.8.30",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@somnia-chain/reactivity-contracts/contracts/SomniaEventHandler.sol"
+      ],
+      "versionPragmas": [
+        "0.8.30"
+      ],
+      "artifacts": [
+        "ReactiveLeaderboard"
+      ]
+    }
+  }
+}
