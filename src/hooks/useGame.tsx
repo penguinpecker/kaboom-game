@@ -28,6 +28,7 @@ interface GameState {
   revealedTiles: Set<number>;
   safeTiles: Set<number>;
   mineTiles: Set<number>;
+  optimisticTiles: Set<number>; // tiles clicked but not yet confirmed on-chain
   multiplier: number;
   commitment: string;
   payout: number;
@@ -52,6 +53,7 @@ interface GameContextType {
 const initialState: GameState = {
   gameId: null, status: "idle", bet: 0.1, mineCount: 5,
   revealedTiles: new Set(), safeTiles: new Set(), mineTiles: new Set(),
+  optimisticTiles: new Set(),
   multiplier: 1.0, commitment: "", payout: 0, pendingTile: null,
   sessionPnl: 0, sessionGames: 0, error: null, lastTxHash: null,
 };
@@ -110,7 +112,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
             const newSafe = new Set(Array.from(prev.safeTiles));
             const newMines = new Set(Array.from(prev.mineTiles));
             if (safe) newSafe.add(tileIdx); else newMines.add(tileIdx);
-            return { ...prev, revealedTiles: newRevealed, safeTiles: newSafe, mineTiles: newMines, multiplier: safe ? newMult : prev.multiplier, pendingTile: null, error: null };
+            // Remove from optimistic set — now confirmed on-chain
+            const newOptimistic = new Set([...Array.from(prev.optimisticTiles)].filter(t => t !== tileIdx));
+            return { ...prev, revealedTiles: newRevealed, safeTiles: newSafe, mineTiles: newMines, optimisticTiles: newOptimistic, multiplier: safe ? newMult : prev.multiplier, pendingTile: null, error: null };
           });
         }
         if (decoded.eventName === "GameLost") {
@@ -190,29 +194,41 @@ export function GameProvider({ children }: { children: ReactNode }) {
         value: parseEther(state.bet.toString()),
         chain: somniaTestnet,
       });
-      const receipt = await publicClient.waitForTransactionReceipt({ hash });
-      parseReceipt(receipt);
-    } catch (err: any) {
-      setState(prev => ({ ...prev, status: "idle", error: err.shortMessage || err.message?.substring(0, 100) || "Transaction failed" }));
+      const receipt = await publicClient.waitForTransactionReceipt({ hash, pollingInterval: 300 });
     }
   }, [state.bet, state.mineCount, walletClient, publicClient, parseReceipt]);
 
   const revealTile = useCallback(async (index: number) => {
     if (!state.gameId || state.status !== "playing" || state.pendingTile !== null || !walletClient || !publicClient) return;
-    if (state.revealedTiles.has(index)) return;
-    setState(prev => ({ ...prev, pendingTile: index, error: null }));
+    if (state.revealedTiles.has(index) || state.optimisticTiles.has(index)) return;
+
+    // ✅ OPTIMISTIC UPDATE — tile flips immediately, no waiting for tx
+    setState(prev => ({
+      ...prev,
+      pendingTile: index,
+      optimisticTiles: new Set([...Array.from(prev.optimisticTiles), index]),
+      error: null,
+    }));
+
     try {
       const hash = await walletClient.writeContract({
         address: CONTRACTS.KaboomGame, abi: KaboomGameAbi, functionName: "revealTile",
         args: [state.gameId!, index],
         chain: somniaTestnet,
       });
-      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      // 🚀 Fast polling — Somnia has sub-second finality, don't wait 4s between polls
+      const receipt = await publicClient.waitForTransactionReceipt({ hash, pollingInterval: 300 });
       parseReceipt(receipt);
     } catch (err: any) {
-      setState(prev => ({ ...prev, pendingTile: null, error: err.shortMessage || err.message?.substring(0, 100) || "Reveal failed" }));
+      // Revert optimistic update on failure
+      setState(prev => ({
+        ...prev,
+        pendingTile: null,
+        optimisticTiles: new Set([...Array.from(prev.optimisticTiles)].filter(t => t !== index)),
+        error: err.shortMessage || err.message?.substring(0, 100) || "Reveal failed",
+      }));
     }
-  }, [state.gameId, state.status, state.pendingTile, state.revealedTiles, walletClient, publicClient, parseReceipt]);
+  }, [state.gameId, state.status, state.pendingTile, state.revealedTiles, state.optimisticTiles, walletClient, publicClient, parseReceipt]);
 
   const cashOut = useCallback(async () => {
     if (!state.gameId || state.status !== "playing" || !walletClient || !publicClient) return;
@@ -223,10 +239,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         args: [state.gameId!],
         chain: somniaTestnet,
       });
-      const receipt = await publicClient.waitForTransactionReceipt({ hash });
-      parseReceipt(receipt);
-    } catch (err: any) {
-      setState(prev => ({ ...prev, status: "playing", error: err.shortMessage || err.message?.substring(0, 100) || "Cashout failed" }));
+      const receipt = await publicClient.waitForTransactionReceipt({ hash, pollingInterval: 300 });
     }
   }, [state.gameId, state.status, walletClient, publicClient, parseReceipt]);
 
@@ -240,6 +253,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       revealedTiles: new Set(),
       safeTiles: new Set(),
       mineTiles: new Set(),
+      optimisticTiles: new Set(),
       multiplier: 1.0,
       commitment: "",
       payout: 0,

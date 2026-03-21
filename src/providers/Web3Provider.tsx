@@ -14,8 +14,11 @@ const PRIVY_APP_ID = "cmmzi6sr1002y0ci4dmt2w88n";
 const wagmiConfig = createConfig({
   chains: [somniaTestnet],
   transports: {
-    [somniaTestnet.id]: http("https://dream-rpc.somnia.network"),
+    [somniaTestnet.id]: http("https://dream-rpc.somnia.network", {
+      timeout: 10_000,
+    }),
   },
+  pollingInterval: 300, // Somnia has sub-second finality — poll aggressively
 });
 
 const queryClient = new QueryClient();
