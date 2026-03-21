@@ -13,6 +13,7 @@
     "@fontsource/inter": "^5.2.8",
     "@fontsource/space-grotesk": "^5.2.10",
     "@privy-io/react-auth": "^3.18.0",
+    "@privy-io/wagmi": "^4.0.3",
     "@react-native-async-storage/async-storage": "^3.0.1",
     "@somnia-chain/reactivity-contracts": "^0.1.6",
     "@tanstack/react-query": "^5.91.3",

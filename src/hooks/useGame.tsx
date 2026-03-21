@@ -1,8 +1,7 @@
 "use client";
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
-import { useReadContract, usePublicClient } from "wagmi";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { createWalletClient, custom, parseEther, formatEther, decodeEventLog, encodeFunctionData } from "viem";
+import { useAccount, usePublicClient, useWalletClient, useReadContract } from "wagmi";
+import { parseEther, formatEther, decodeEventLog } from "viem";
 import { CONTRACTS, GAME_CONFIG, somniaTestnet } from "@/lib/chain";
 import { KaboomGameAbi } from "@/lib/abis";
 
@@ -46,21 +45,10 @@ const GameContext = createContext<GameContextType | null>(null);
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GameState>(initialState);
+  const { address } = useAccount();
   const publicClient = usePublicClient();
-  const { wallets } = useWallets();
-
-  // Get Privy embedded wallet (auto-signs, no popup)
-  const getWalletClient = useCallback(async () => {
-    const wallet = wallets.find(w => w.walletClientType === "privy") || wallets[0];
-    if (!wallet) throw new Error("No wallet connected");
-    await wallet.switchChain(somniaTestnet.id);
-    const provider = await wallet.getEthereumProvider();
-    return createWalletClient({
-      chain: somniaTestnet,
-      transport: custom(provider),
-      account: wallet.address as `0x${string}`,
-    });
-  }, [wallets]);
+  // walletClient comes from Privy embedded wallet via @privy-io/wagmi bridge — auto-signs!
+  const { data: walletClient } = useWalletClient();
 
   // Parse game events from tx receipt
   const parseReceipt = useCallback((receipt: any) => {
@@ -117,59 +105,60 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [verifyData, state.status]);
 
-  // ═══ ACTIONS — all use Privy embedded wallet (auto-sign) ═══
+  // ═══ ACTIONS — walletClient is Privy embedded wallet, auto-signs ═══
 
   const setBet = useCallback((bet: number) => setState(prev => ({ ...prev, bet })), []);
   const setMineCount = useCallback((count: number) => setState(prev => ({ ...prev, mineCount: count })), []);
 
   const startGame = useCallback(async () => {
+    if (!walletClient || !publicClient) return;
     setState(prev => ({ ...prev, status: "starting", error: null }));
     try {
-      const wc = await getWalletClient();
-      const hash = await wc.writeContract({
+      const hash = await walletClient.writeContract({
         address: CONTRACTS.KaboomGame, abi: KaboomGameAbi, functionName: "startGame",
         args: [state.mineCount, "0x0000000000000000000000000000000000000000" as `0x${string}`],
         value: parseEther(state.bet.toString()),
+        chain: somniaTestnet,
       });
-      const receipt = await publicClient!.waitForTransactionReceipt({ hash });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
       parseReceipt(receipt);
     } catch (err: any) {
       setState(prev => ({ ...prev, status: "idle", error: err.shortMessage || err.message?.substring(0, 100) || "Transaction failed" }));
     }
-  }, [state.bet, state.mineCount, getWalletClient, publicClient, parseReceipt]);
+  }, [state.bet, state.mineCount, walletClient, publicClient, parseReceipt]);
 
   const revealTile = useCallback(async (index: number) => {
-    if (!state.gameId || state.status !== "playing" || state.pendingTile !== null) return;
+    if (!state.gameId || state.status !== "playing" || state.pendingTile !== null || !walletClient || !publicClient) return;
     if (state.revealedTiles.has(index)) return;
     setState(prev => ({ ...prev, pendingTile: index, error: null }));
     try {
-      const wc = await getWalletClient();
-      const hash = await wc.writeContract({
+      const hash = await walletClient.writeContract({
         address: CONTRACTS.KaboomGame, abi: KaboomGameAbi, functionName: "revealTile",
         args: [state.gameId!, index],
+        chain: somniaTestnet,
       });
-      const receipt = await publicClient!.waitForTransactionReceipt({ hash });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
       parseReceipt(receipt);
     } catch (err: any) {
       setState(prev => ({ ...prev, pendingTile: null, error: err.shortMessage || err.message?.substring(0, 100) || "Reveal failed" }));
     }
-  }, [state.gameId, state.status, state.pendingTile, state.revealedTiles, getWalletClient, publicClient, parseReceipt]);
+  }, [state.gameId, state.status, state.pendingTile, state.revealedTiles, walletClient, publicClient, parseReceipt]);
 
   const cashOut = useCallback(async () => {
-    if (!state.gameId || state.status !== "playing") return;
+    if (!state.gameId || state.status !== "playing" || !walletClient || !publicClient) return;
     setState(prev => ({ ...prev, status: "cashing", error: null }));
     try {
-      const wc = await getWalletClient();
-      const hash = await wc.writeContract({
+      const hash = await walletClient.writeContract({
         address: CONTRACTS.KaboomGame, abi: KaboomGameAbi, functionName: "cashOut",
         args: [state.gameId!],
+        chain: somniaTestnet,
       });
-      const receipt = await publicClient!.waitForTransactionReceipt({ hash });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
       parseReceipt(receipt);
     } catch (err: any) {
       setState(prev => ({ ...prev, status: "playing", error: err.shortMessage || err.message?.substring(0, 100) || "Cashout failed" }));
     }
-  }, [state.gameId, state.status, getWalletClient, publicClient, parseReceipt]);
+  }, [state.gameId, state.status, walletClient, publicClient, parseReceipt]);
 
   const resetGame = useCallback(() => {
     setState(prev => ({

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAccount, useBalance } from "wagmi";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { usePrivy } from "@privy-io/react-auth";
 import { useModal } from "@/hooks/useModal";
 import { useVaultBalance, useVaultHealth, useRiskLevel, useWhaleAlertCount } from "@/hooks/useContracts";
 import { useState, useRef, useEffect } from "react";
@@ -21,31 +21,26 @@ const RISK_LABELS = ["Healthy", "Caution", "Emergency"];
 
 export function Navbar() {
   const pathname = usePathname();
-  const { address: wagmiAddr } = useAccount();
+  // wagmi useAccount returns Privy embedded wallet via @privy-io/wagmi bridge
+  const { address } = useAccount();
+  const { data: balanceData } = useBalance({ address });
+  const { login, logout, authenticated, ready } = usePrivy();
   const { open } = useModal();
   const [showMobile, setShowMobile] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
   const [mounted, setMounted] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
-  // Real on-chain data
   const { data: vaultBal } = useVaultBalance();
   const { data: vaultHealth } = useVaultHealth();
   const { data: riskLevel } = useRiskLevel();
   const { data: whaleCount } = useWhaleAlertCount();
 
-  const { login, logout, authenticated } = usePrivy();
-  const { wallets } = useWallets();
-  const privyWallet = wallets.find(w => w.walletClientType === "privy") || wallets[0];
-  const address = wagmiAddr || (privyWallet?.address as `0x${string}` | undefined);
-  const { data: balanceData } = useBalance({ address });
-  const isConnected = authenticated && !!address;
-
   const shortAddr = address ? `${address.slice(0, 4)}…${address.slice(-3)}` : "";
   const walletBal = balanceData ? Number(formatEther(balanceData.value)).toFixed(2) : "0.00";
   const riskIdx = riskLevel !== undefined ? Number(riskLevel) : 0;
+  const isConnected = mounted && authenticated && !!address;
 
-  // Fix hydration mismatch — only render wallet-dependent UI after mount
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
@@ -84,19 +79,18 @@ export function Navbar() {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          {mounted && isConnected && (
+          {isConnected && (
             <div className="flex items-center gap-2 px-4 py-1.5 bg-surface-container-highest rounded-lg border border-outline-variant/20">
               <span className="w-2 h-2 rounded-full bg-emerald" />
               <span className="font-headline text-sm font-bold text-primary tracking-wide">{walletBal} STT</span>
             </div>
           )}
-          <button onClick={() => authenticated ? open("profile") : login()}
+          <button onClick={() => isConnected ? open("profile") : login()}
             className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-5 py-2 font-headline text-xs font-bold uppercase tracking-widest hover:shadow-[0_0_15px_rgba(164,201,255,0.4)] transition-all active:scale-95 flex items-center gap-2">
-            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{mounted && authenticated ? "person" : "account_balance_wallet"}</span>
-            <span className="hidden sm:inline">{mounted && authenticated ? shortAddr : "Connect"}</span>
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{isConnected ? "person" : "account_balance_wallet"}</span>
+            <span className="hidden sm:inline">{isConnected ? shortAddr : "Connect"}</span>
           </button>
 
-          {/* Notifications — real on-chain data */}
           <div className="relative" ref={notifRef}>
             <button onClick={() => setShowNotif(!showNotif)} className="relative p-2 hover:bg-surface-container-highest rounded-lg transition-all">
               <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: 22 }}>notifications</span>
@@ -111,16 +105,10 @@ export function Navbar() {
                   <span className="font-headline text-[10px] text-on-surface-variant">On-Chain</span>
                 </div>
                 <div className="max-h-[260px] overflow-y-auto">
-                  <NotifRow icon="shield" color="text-emerald" label="RISK GUARDIAN"
-                    msg={`Risk level: ${RISK_LABELS[riskIdx] || "Unknown"} — Vault health: ${vaultHealth ? vaultHealth.toString() : "—"}%`} />
-                  <NotifRow icon="account_balance" color="text-primary" label="VAULT"
-                    msg={`Balance: ${vaultBal ? Number(formatEther(vaultBal)).toFixed(2) : "—"} STT`} />
-                  <NotifRow icon="visibility" color="text-amber" label="WHALE ALERTS"
-                    msg={`${whaleCount ? whaleCount.toString() : "0"} whale events detected`} />
-                  <NotifRow icon="emoji_events" color="text-secondary" label="LEADERBOARD"
-                    msg="Auto-ranked via ReactiveLeaderboard" />
-                  <NotifRow icon="group" color="text-tertiary" label="REFERRAL"
-                    msg="1% auto-credit on every referred bet" />
+                  <NotifRow icon="shield" color="text-emerald" label="RISK GUARDIAN" msg={`Risk: ${RISK_LABELS[riskIdx] || "—"} — Health: ${vaultHealth ? vaultHealth.toString() : "—"}%`} />
+                  <NotifRow icon="account_balance" color="text-primary" label="VAULT" msg={`Balance: ${vaultBal ? Number(formatEther(vaultBal)).toFixed(2) : "—"} STT`} />
+                  <NotifRow icon="visibility" color="text-amber" label="WHALE ALERTS" msg={`${whaleCount ? whaleCount.toString() : "0"} whale events`} />
+                  <NotifRow icon="emoji_events" color="text-secondary" label="LEADERBOARD" msg="Auto-ranked via ReactiveLeaderboard" />
                 </div>
               </div>
             )}
