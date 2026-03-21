@@ -2,6 +2,7 @@
 import { useGame } from "@/hooks/useGame";
 import { useModal } from "@/hooks/useModal";
 import { useAccount, useBalance } from "wagmi";
+import { usePrivy } from "@privy-io/react-auth";
 import { useVaultMaxBet } from "@/hooks/useContracts";
 import { GAME_CONFIG } from "@/lib/chain";
 import { formatEther } from "viem";
@@ -10,6 +11,7 @@ export function BetControls() {
   const { state, setBet, setMineCount, startGame, cashOut } = useGame();
   const { open } = useModal();
   const { isConnected, address } = useAccount();
+  const { login, authenticated } = usePrivy();
   const { data: balanceData } = useBalance({ address });
   const { data: maxBetWei } = useVaultMaxBet();
 
@@ -22,7 +24,7 @@ export function BetControls() {
   const walletBalance = balanceData ? Number(formatEther(balanceData.value)) : 0;
 
   const handleStart = () => {
-    if (!isConnected) { open("wallet"); return; }
+    if (!authenticated) { login(); return; }
     if (state.bet > walletBalance) { return; }
     if (state.bet > maxBet) { return; }
     startGame();
@@ -83,11 +85,11 @@ export function BetControls() {
 
         {/* Engage / Cashout */}
         {!isPlaying && state.status !== "cashing" ? (
-          <button onClick={handleStart} disabled={isStarting || !isConnected}
+          <button onClick={handleStart} disabled={isStarting || !authenticated}
             className="w-full mt-8 py-5 bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-black text-lg tracking-[0.2em] glow-primary hover:brightness-125 transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50">
             {isStarting ? (
               <><span className="material-symbols-outlined animate-spin" style={{ fontSize: 24 }}>progress_activity</span>CONFIRMING...</>
-            ) : !isConnected ? (
+            ) : !authenticated ? (
               <><span className="material-symbols-outlined" style={{ fontSize: 24 }}>account_balance_wallet</span>CONNECT WALLET</>
             ) : (
               <><span className="material-symbols-outlined mi" style={{ fontSize: 24 }}>bolt</span>ENGAGE BET</>

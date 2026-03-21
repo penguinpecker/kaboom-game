@@ -26,7 +26,7 @@ export function Grid() {
   const riskColor = riskLevel > 0.6 ? "text-error" : riskLevel > 0.3 ? "text-amber" : "text-emerald";
 
   return (
-    <div className="bg-surface-container-low p-8 stealth-card border border-outline-variant/10 aspect-square lg:aspect-video flex flex-col">
+    <div className="bg-surface-container-low p-8 stealth-card border border-outline-variant/10 flex flex-col w-full max-w-[700px] mx-auto">
       <div className="flex justify-between items-center mb-6">
         <div className="flex gap-2">
           <span className="px-3 py-1 bg-surface-container-highest text-[10px] font-headline font-bold text-primary tracking-widest">
@@ -47,7 +47,7 @@ export function Grid() {
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-4 grid-rows-4 gap-4">
+      <div className="aspect-square grid grid-cols-4 grid-rows-4 gap-4">
         {Array.from({ length: GAME_CONFIG.GRID_SIZE }, (_, i) => (
           <Tile key={i} index={i} />
         ))}

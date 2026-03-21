@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAccount, useBalance } from "wagmi";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useModal } from "@/hooks/useModal";
 import { useVaultBalance, useVaultHealth, useRiskLevel, useWhaleAlertCount } from "@/hooks/useContracts";
 import { useState, useRef, useEffect } from "react";
@@ -20,8 +21,7 @@ const RISK_LABELS = ["Healthy", "Caution", "Emergency"];
 
 export function Navbar() {
   const pathname = usePathname();
-  const { address, isConnected } = useAccount();
-  const { data: balanceData } = useBalance({ address });
+  const { address: wagmiAddr } = useAccount();
   const { open } = useModal();
   const [showMobile, setShowMobile] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
@@ -33,6 +33,13 @@ export function Navbar() {
   const { data: vaultHealth } = useVaultHealth();
   const { data: riskLevel } = useRiskLevel();
   const { data: whaleCount } = useWhaleAlertCount();
+
+  const { login, logout, authenticated } = usePrivy();
+  const { wallets } = useWallets();
+  const privyWallet = wallets.find(w => w.walletClientType === "privy") || wallets[0];
+  const address = wagmiAddr || (privyWallet?.address as `0x${string}` | undefined);
+  const { data: balanceData } = useBalance({ address });
+  const isConnected = authenticated && !!address;
 
   const shortAddr = address ? `${address.slice(0, 4)}…${address.slice(-3)}` : "";
   const walletBal = balanceData ? Number(formatEther(balanceData.value)).toFixed(2) : "0.00";
@@ -83,10 +90,10 @@ export function Navbar() {
               <span className="font-headline text-sm font-bold text-primary tracking-wide">{walletBal} STT</span>
             </div>
           )}
-          <button onClick={() => isConnected ? open("profile") : open("wallet")}
+          <button onClick={() => authenticated ? open("profile") : login()}
             className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-5 py-2 font-headline text-xs font-bold uppercase tracking-widest hover:shadow-[0_0_15px_rgba(164,201,255,0.4)] transition-all active:scale-95 flex items-center gap-2">
-            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{mounted && isConnected ? "person" : "account_balance_wallet"}</span>
-            <span className="hidden sm:inline">{mounted && isConnected ? shortAddr : "Connect"}</span>
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{mounted && authenticated ? "person" : "account_balance_wallet"}</span>
+            <span className="hidden sm:inline">{mounted && authenticated ? shortAddr : "Connect"}</span>
           </button>
 
           {/* Notifications — real on-chain data */}

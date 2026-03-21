@@ -2,7 +2,8 @@
 import { useModal } from "@/hooks/useModal";
 import { useToast } from "@/hooks/useToast";
 import { useGame } from "@/hooks/useGame";
-import { useAccount, useConnect, useDisconnect, useBalance } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
+import { usePrivy } from "@privy-io/react-auth";
 import { useReferralStats, useVerifyGame } from "@/hooks/useContracts";
 import { ModalShell } from "./ModalShell";
 import { formatEther } from "viem";
@@ -26,24 +27,23 @@ export function ModalRoot() {
 
 function WalletModal() {
   const { close } = useModal();
-  const { toast } = useToast();
-  const { connect, connectors } = useConnect();
+  const { login } = usePrivy();
 
   return (
     <ModalShell title="Connect Wallet">
       <p className="text-xs text-on-surface-variant mb-3">Somnia Testnet (Chain 50312)</p>
-      {connectors.map((c) => (
-        <button key={c.id} onClick={() => { connect({ connector: c }); toast("Connecting...", "primary"); close(); }}
-          className="w-full flex items-center gap-3 px-3 py-3 bg-surface-container-highest border border-outline-variant/10 hover:border-primary/25 hover:bg-primary/5 transition-all mb-2 group">
-          <div className="w-8 h-8 rounded bg-surface-bright flex items-center justify-center">
-            <span className="material-symbols-outlined text-primary mi" style={{ fontSize: 20 }}>account_balance_wallet</span>
-          </div>
-          <div className="flex-1 text-left">
-            <div className="font-headline text-xs font-bold text-on-surface group-hover:text-primary">{c.name}</div>
-          </div>
-          <span className="material-symbols-outlined text-on-surface-variant/30 text-sm group-hover:text-primary">arrow_forward</span>
-        </button>
-      ))}
+      <button onClick={() => { login(); close(); }}
+        className="w-full flex items-center gap-3 px-3 py-4 bg-surface-container-highest border border-outline-variant/10 hover:border-primary/25 hover:bg-primary/5 transition-all mb-2 group">
+        <div className="w-10 h-10 rounded bg-surface-bright flex items-center justify-center">
+          <span className="material-symbols-outlined text-primary mi" style={{ fontSize: 22 }}>account_balance_wallet</span>
+        </div>
+        <div className="flex-1 text-left">
+          <div className="font-headline text-sm font-bold text-on-surface group-hover:text-primary">Sign In with Privy</div>
+          <div className="font-headline text-[10px] text-on-surface-variant/50">Email, Google, wallet, or social login</div>
+        </div>
+        <span className="material-symbols-outlined text-on-surface-variant/30 text-sm group-hover:text-primary">arrow_forward</span>
+      </button>
+      <p className="text-[10px] text-on-surface-variant/40 mt-2">Embedded wallet — no popups per transaction</p>
     </ModalShell>
   );
 }
@@ -51,7 +51,7 @@ function WalletModal() {
 function ProfileModal() {
   const { open, close } = useModal();
   const { address } = useAccount();
-  const { disconnect } = useDisconnect();
+  const { logout } = usePrivy();
   const { toast } = useToast();
   const { data: balData } = useBalance({ address });
   const short = address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "";
@@ -75,7 +75,7 @@ function ProfileModal() {
       <div className="flex gap-2">
         <button onClick={() => { close(); setTimeout(() => open("deposit"), 100); }}
           className="flex-1 py-2.5 bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold text-[10px] tracking-widest hover:brightness-110">DEPOSIT</button>
-        <button onClick={() => { disconnect(); toast("Disconnected", "amber"); close(); }}
+        <button onClick={() => { logout(); toast("Logged out", "amber"); close(); }}
           className="py-2.5 px-4 border border-error/15 text-error/60 font-headline font-bold text-[10px] tracking-widest hover:bg-error/5">DISCONNECT</button>
       </div>
     </ModalShell>
