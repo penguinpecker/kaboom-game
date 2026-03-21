@@ -7,6 +7,19 @@ import { KaboomGameAbi } from "@/lib/abis";
 
 type GameStatus = "idle" | "starting" | "playing" | "revealing" | "cashing" | "won" | "lost";
 
+export interface GameResult {
+  gameId: string;
+  player: string;
+  won: boolean;
+  bet: number;
+  payout: number;
+  multiplier: number;
+  mineCount: number;
+  tilesCleared: number;
+  txHash: string;
+  timestamp: number;
+}
+
 interface GameState {
   gameId: bigint | null;
   status: GameStatus;
@@ -22,6 +35,7 @@ interface GameState {
   sessionPnl: number;
   sessionGames: number;
   error: string | null;
+  lastTxHash: string | null;
 }
 
 interface GameContextType {
@@ -32,23 +46,48 @@ interface GameContextType {
   revealTile: (index: number) => void;
   cashOut: () => void;
   resetGame: () => void;
+  gameHistory: GameResult[];
 }
 
 const initialState: GameState = {
   gameId: null, status: "idle", bet: 0.1, mineCount: 5,
   revealedTiles: new Set(), safeTiles: new Set(), mineTiles: new Set(),
   multiplier: 1.0, commitment: "", payout: 0, pendingTile: null,
-  sessionPnl: 0, sessionGames: 0, error: null,
+  sessionPnl: 0, sessionGames: 0, error: null, lastTxHash: null,
 };
 
 const GameContext = createContext<GameContextType | null>(null);
 
+// ═══ LOCAL STORAGE HELPERS ═══
+const STORAGE_KEY = "kaboom_game_history";
+
+function loadHistory(): GameResult[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveResult(result: GameResult) {
+  if (typeof window === "undefined") return;
+  try {
+    const history = loadHistory();
+    history.unshift(result); // newest first
+    if (history.length > 100) history.length = 100; // cap at 100
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  } catch { /* localStorage full or unavailable */ }
+}
+
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GameState>(initialState);
+  const [gameHistory, setGameHistory] = useState<GameResult[]>([]);
   const { address } = useAccount();
   const publicClient = usePublicClient();
-  // walletClient comes from Privy embedded wallet via @privy-io/wagmi bridge — auto-signs!
   const { data: walletClient } = useWalletClient();
+
+  // Load history on mount
+  useEffect(() => { setGameHistory(loadHistory()); }, []);
 
   // Parse game events from tx receipt
   const parseReceipt = useCallback((receipt: any) => {
@@ -75,16 +114,50 @@ export function GameProvider({ children }: { children: ReactNode }) {
           });
         }
         if (decoded.eventName === "GameLost") {
-          setState(prev => ({ ...prev, status: "lost", pendingTile: null, sessionGames: prev.sessionGames + 1, sessionPnl: prev.sessionPnl - prev.bet }));
+          const args = decoded.args as any;
+          setState(prev => {
+            const result: GameResult = {
+              gameId: prev.gameId?.toString() || "0",
+              player: address || "0x0",
+              won: false,
+              bet: prev.bet,
+              payout: 0,
+              multiplier: 0,
+              mineCount: prev.mineCount,
+              tilesCleared: prev.safeTiles.size,
+              txHash: receipt.transactionHash,
+              timestamp: Date.now(),
+            };
+            saveResult(result);
+            setGameHistory(loadHistory());
+            return { ...prev, status: "lost", pendingTile: null, lastTxHash: receipt.transactionHash, sessionGames: prev.sessionGames + 1, sessionPnl: prev.sessionPnl - prev.bet };
+          });
         }
         if (decoded.eventName === "GameWon") {
           const args = decoded.args as any;
           const payout = Number(formatEther(args.payout));
-          setState(prev => ({ ...prev, status: "won", payout, pendingTile: null, sessionGames: prev.sessionGames + 1, sessionPnl: prev.sessionPnl + (payout - prev.bet) }));
+          const mult = Number(args.multiplier) / 1e18;
+          setState(prev => {
+            const result: GameResult = {
+              gameId: prev.gameId?.toString() || "0",
+              player: address || "0x0",
+              won: true,
+              bet: prev.bet,
+              payout,
+              multiplier: mult,
+              mineCount: prev.mineCount,
+              tilesCleared: prev.safeTiles.size,
+              txHash: receipt.transactionHash,
+              timestamp: Date.now(),
+            };
+            saveResult(result);
+            setGameHistory(loadHistory());
+            return { ...prev, status: "won", payout, lastTxHash: receipt.transactionHash, pendingTile: null, sessionGames: prev.sessionGames + 1, sessionPnl: prev.sessionPnl + (payout - prev.bet) };
+          });
         }
       } catch { /* not our event */ }
     }
-  }, []);
+  }, [address]);
 
   // Reveal mines after loss
   const { data: verifyData } = useReadContract({
@@ -105,7 +178,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [verifyData, state.status]);
 
-  // ═══ ACTIONS — walletClient is Privy embedded wallet, auto-signs ═══
+  // ═══ ACTIONS ═══
 
   const setBet = useCallback((bet: number) => setState(prev => ({ ...prev, bet })), []);
   const setMineCount = useCallback((count: number) => setState(prev => ({ ...prev, mineCount: count })), []);
@@ -160,14 +233,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [state.gameId, state.status, walletClient, publicClient, parseReceipt]);
 
+  // FULL RESET — clears all tiles, mines, everything back to idle
   const resetGame = useCallback(() => {
     setState(prev => ({
-      ...initialState, bet: prev.bet, mineCount: prev.mineCount,
-      sessionPnl: prev.sessionPnl, sessionGames: prev.sessionGames,
+      gameId: null,
+      status: "idle",
+      bet: prev.bet,
+      mineCount: prev.mineCount,
+      revealedTiles: new Set(),
+      safeTiles: new Set(),
+      mineTiles: new Set(),
+      multiplier: 1.0,
+      commitment: "",
+      payout: 0,
+      pendingTile: null,
+      sessionPnl: prev.sessionPnl,
+      sessionGames: prev.sessionGames,
+      error: null,
+      lastTxHash: null,
     }));
   }, []);
 
-  const value = { state, setBet, setMineCount, startGame, revealTile, cashOut, resetGame };
+  const value = { state, setBet, setMineCount, startGame, revealTile, cashOut, resetGame, gameHistory };
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }
 

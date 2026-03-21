@@ -7,7 +7,6 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useReferralStats, useVerifyGame } from "@/hooks/useContracts";
 import { ModalShell } from "./ModalShell";
 import { formatEther } from "viem";
-import { useState } from "react";
 
 export function ModalRoot() {
   const { modal } = useModal();
@@ -74,7 +73,7 @@ function ProfileModal() {
       </div>
       <div className="flex gap-2">
         <button onClick={() => { close(); setTimeout(() => open("deposit"), 100); }}
-          className="flex-1 py-2.5 bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold text-[10px] tracking-widest hover:brightness-110">DEPOSIT</button>
+          className="flex-1 py-2.5 bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold text-[10px] tracking-widest hover:brightness-110">FUND WALLET</button>
         <button onClick={() => { logout(); toast("Logged out", "amber"); close(); }}
           className="py-2.5 px-4 border border-error/15 text-error/60 font-headline font-bold text-[10px] tracking-widest hover:bg-error/5">DISCONNECT</button>
       </div>
@@ -85,14 +84,35 @@ function ProfileModal() {
 function DepositModal() {
   const { close } = useModal();
   const { toast } = useToast();
-  const [amt, setAmt] = useState("1");
+  const { address } = useAccount();
+  const walletAddr = address || "Connect wallet first";
+
+  const copyAddress = () => {
+    if (address) {
+      navigator.clipboard?.writeText(address);
+      toast("Address copied!", "emerald");
+    }
+  };
+
   return (
-    <ModalShell title="Deposit STT">
-      <p className="text-xs text-on-surface-variant mb-3">Send STT to vault to increase bankroll</p>
-      <input type="number" value={amt} onChange={(e) => setAmt(e.target.value)}
-        className="w-full bg-surface-container-lowest font-headline font-bold text-xl text-primary px-3 py-2 mb-3 outline-none" />
-      <button onClick={() => { toast("Use the Vault page to deposit", "primary"); close(); }}
-        className="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-black text-xs tracking-widest">DEPOSIT</button>
+    <ModalShell title="Fund Wallet">
+      <p className="text-xs text-on-surface-variant mb-4">Send STT to this address from the faucet or another wallet to start playing.</p>
+      
+      <div className="bg-surface-container-lowest p-4 mb-3">
+        <div className="font-headline text-[10px] text-on-surface-variant/40 tracking-widest uppercase mb-1">Your Wallet Address</div>
+        <div className="font-mono text-sm text-primary break-all select-all">{walletAddr}</div>
+      </div>
+
+      <button onClick={copyAddress}
+        className="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-black text-xs tracking-widest hover:brightness-110 active:scale-95 mb-2">
+        COPY ADDRESS
+      </button>
+
+      <a href="https://cloud.google.com/application/web3/faucet/somnia/shannon" target="_blank" rel="noreferrer"
+        className="w-full py-3 border border-emerald/20 text-emerald font-headline font-bold text-xs tracking-widest hover:bg-emerald/5 flex items-center justify-center gap-2">
+        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>open_in_new</span>
+        GET STT FROM FAUCET
+      </a>
     </ModalShell>
   );
 }

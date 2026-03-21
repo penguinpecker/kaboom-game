@@ -35,6 +35,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
           ethereum: {
             createOnLogin: "users-without-wallets",
           },
+          showWalletUIs: false, // NO tx confirmation popup — auto-approve
         },
         loginMethods: ["google", "email", "wallet"],
       }}
