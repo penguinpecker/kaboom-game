@@ -114,46 +114,43 @@ export function GameProvider({ children }: { children: ReactNode }) {
           });
         }
         if (decoded.eventName === "GameLost") {
-          const args = decoded.args as any;
+          setState(prev => {
+            return { ...prev, status: "lost" as GameStatus, pendingTile: null, lastTxHash: receipt.transactionHash, sessionGames: prev.sessionGames + 1, sessionPnl: prev.sessionPnl - prev.bet };
+          });
+          // Save to localStorage OUTSIDE setState
           setState(prev => {
             const result: GameResult = {
               gameId: prev.gameId?.toString() || "0",
               player: address || "0x0",
-              won: false,
-              bet: prev.bet,
-              payout: 0,
-              multiplier: 0,
-              mineCount: prev.mineCount,
-              tilesCleared: prev.safeTiles.size,
-              txHash: receipt.transactionHash,
-              timestamp: Date.now(),
+              won: false, bet: prev.bet, payout: 0, multiplier: 0,
+              mineCount: prev.mineCount, tilesCleared: prev.safeTiles.size,
+              txHash: receipt.transactionHash, timestamp: Date.now(),
             };
             saveResult(result);
-            setGameHistory(loadHistory());
-            return { ...prev, status: "lost", pendingTile: null, lastTxHash: receipt.transactionHash, sessionGames: prev.sessionGames + 1, sessionPnl: prev.sessionPnl - prev.bet };
+            return prev;
           });
+          setGameHistory(loadHistory());
         }
         if (decoded.eventName === "GameWon") {
           const args = decoded.args as any;
           const payout = Number(formatEther(args.payout));
           const mult = Number(args.multiplier) / 1e18;
           setState(prev => {
+            return { ...prev, status: "won" as GameStatus, payout, lastTxHash: receipt.transactionHash, pendingTile: null, sessionGames: prev.sessionGames + 1, sessionPnl: prev.sessionPnl + (payout - prev.bet) };
+          });
+          // Save to localStorage OUTSIDE setState
+          setState(prev => {
             const result: GameResult = {
               gameId: prev.gameId?.toString() || "0",
               player: address || "0x0",
-              won: true,
-              bet: prev.bet,
-              payout,
-              multiplier: mult,
-              mineCount: prev.mineCount,
-              tilesCleared: prev.safeTiles.size,
-              txHash: receipt.transactionHash,
-              timestamp: Date.now(),
+              won: true, bet: prev.bet, payout, multiplier: mult,
+              mineCount: prev.mineCount, tilesCleared: prev.safeTiles.size,
+              txHash: receipt.transactionHash, timestamp: Date.now(),
             };
             saveResult(result);
-            setGameHistory(loadHistory());
-            return { ...prev, status: "won", payout, lastTxHash: receipt.transactionHash, pendingTile: null, sessionGames: prev.sessionGames + 1, sessionPnl: prev.sessionPnl + (payout - prev.bet) };
+            return prev;
           });
+          setGameHistory(loadHistory());
         }
       } catch { /* not our event */ }
     }
