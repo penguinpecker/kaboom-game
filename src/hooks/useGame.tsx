@@ -192,7 +192,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         address: CONTRACTS.KaboomGame, abi: KaboomGameAbi, functionName: "startGame",
         args: [state.mineCount, "0x0000000000000000000000000000000000000000" as `0x${string}`],
         value: parseEther(state.bet.toString()),
-        gas: 2_500_000n,      // startGame triggers reactive subs ~1.75M gas on-chain
         gasPrice: parseGwei("6"), // Somnia fixed at 6 gwei
         chain: somniaTestnet,
       });
@@ -219,7 +218,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const hash = await walletClient.writeContract({
         address: CONTRACTS.KaboomGame, abi: KaboomGameAbi, functionName: "revealTile",
         args: [state.gameId!, index],
-        gas: 1_000_000n,     // revealTile: reactive subs can push to 400k+, 1M safe ceiling
         gasPrice: parseGwei("6"), // Somnia fixed at 6 gwei
         chain: somniaTestnet,
       });
@@ -244,7 +242,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const hash = await walletClient.writeContract({
         address: CONTRACTS.KaboomGame, abi: KaboomGameAbi, functionName: "cashOut",
         args: [state.gameId!],
-        gas: 1_000_000n,     // cashOut: match revealTile ceiling
         gasPrice: parseGwei("6"), // Somnia fixed at 6 gwei
         chain: somniaTestnet,
       });
