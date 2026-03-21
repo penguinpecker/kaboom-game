@@ -70,8 +70,8 @@ export function Grid() {
             <div className="font-headline font-bold text-secondary text-lg">{state.safeTiles.size} / {safeTilesTotal}</div>
           </div>
         </div>
-        {state.status === "playing" && state.safeTiles.size > 0 && (
-          <button onClick={cashOut} disabled={state.status === "cashing"} className="py-3 px-8 bg-surface-bright border border-primary/30 text-primary font-headline font-black text-xs tracking-widest hover:bg-primary hover:text-on-primary transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+        {(state.status === "playing" || state.status === "cashing") && state.safeTiles.size > 0 && (
+          <button onClick={cashOut} disabled={state.status === "cashing"} className="py-3 px-8 bg-surface-bright border border-primary/30 text-primary font-headline font-black text-xs tracking-widest hover:bg-primary hover:text-on-primary transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
             EXIT &amp; WITHDRAW
           </button>
         )}
