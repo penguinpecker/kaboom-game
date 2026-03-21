@@ -8,6 +8,7 @@ import { useVaultBalance, useVaultHealth, useRiskLevel, useWhaleAlertCount } fro
 import { useState, useRef, useEffect } from "react";
 import { formatEther } from "viem";
 import { MobileDrawer } from "./MobileDrawer";
+import { KaboomLogo } from "@/components/ui/KaboomLogo";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -59,11 +60,7 @@ export function Navbar() {
             <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: 24 }}>menu</span>
           </button>
           <Link href="/" className="flex items-center gap-2">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="9" stroke="#60a5fa" strokeWidth="2" />
-              <circle cx="12" cy="12" r="3.5" fill="#f26aff" />
-              <path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="#a4c9ff" strokeWidth="1" strokeLinecap="round" />
-            </svg>
+            <KaboomLogo size={36} />
             <span className="text-2xl font-black italic tracking-tighter font-headline text-transparent bg-clip-text bg-gradient-to-br from-blue-300 to-blue-500">KABOOM!</span>
           </Link>
           <nav className="hidden lg:flex gap-6 items-center">

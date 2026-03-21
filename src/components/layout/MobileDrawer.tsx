@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useModal } from "@/hooks/useModal";
+import { KaboomLogo } from "@/components/ui/KaboomLogo";
 
 const LINKS = [
   { href: "/", label: "Home", icon: "home" },
@@ -16,7 +17,7 @@ export function MobileDrawer({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-[95] modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="w-60 h-full bg-surface-container-low border-r border-outline-variant/10 p-5 animate-scale-in">
         <div className="flex items-center gap-2 mb-6">
-          <svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="#60a5fa" strokeWidth="2" fill="none" /><circle cx="12" cy="12" r="3.5" fill="#f26aff" /></svg>
+          <KaboomLogo size={28} />
           <span className="font-headline text-base font-black italic text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-container">KABOOM!</span>
         </div>
         <nav className="space-y-1">
