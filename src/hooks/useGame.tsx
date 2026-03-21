@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { useAccount, usePublicClient, useWalletClient, useReadContract } from "wagmi";
-import { parseEther, formatEther, decodeEventLog } from "viem";
+import { parseEther, formatEther, decodeEventLog, parseGwei } from "viem";
 import { CONTRACTS, GAME_CONFIG, somniaTestnet } from "@/lib/chain";
 import { KaboomGameAbi } from "@/lib/abis";
 
@@ -192,6 +192,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         address: CONTRACTS.KaboomGame, abi: KaboomGameAbi, functionName: "startGame",
         args: [state.mineCount, "0x0000000000000000000000000000000000000000" as `0x${string}`],
         value: parseEther(state.bet.toString()),
+        gas: 300_000n,        // skip eth_estimateGas round-trip (~300ms)
+        gasPrice: parseGwei("6"), // skip eth_feeHistory round-trip (~260ms)
         chain: somniaTestnet,
       });
       const receipt = await publicClient.waitForTransactionReceipt({ hash, pollingInterval: 300 });
@@ -217,6 +219,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const hash = await walletClient.writeContract({
         address: CONTRACTS.KaboomGame, abi: KaboomGameAbi, functionName: "revealTile",
         args: [state.gameId!, index],
+        gas: 150_000n,        // skip eth_estimateGas round-trip (~300ms)
+        gasPrice: parseGwei("6"), // skip eth_feeHistory round-trip (~260ms)
         chain: somniaTestnet,
       });
       // 🚀 Fast polling — Somnia has sub-second finality, don't wait 4s between polls
@@ -240,6 +244,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const hash = await walletClient.writeContract({
         address: CONTRACTS.KaboomGame, abi: KaboomGameAbi, functionName: "cashOut",
         args: [state.gameId!],
+        gas: 120_000n,        // skip eth_estimateGas round-trip (~300ms)
+        gasPrice: parseGwei("6"), // skip eth_feeHistory round-trip (~260ms)
         chain: somniaTestnet,
       });
       const receipt = await publicClient.waitForTransactionReceipt({ hash, pollingInterval: 300 });
