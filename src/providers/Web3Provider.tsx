@@ -1,8 +1,6 @@
 "use client";
 import { ReactNode } from "react";
 import { PrivyProvider } from "@privy-io/react-auth";
-// CRITICAL: Import WagmiProvider and createConfig from @privy-io/wagmi, NOT from wagmi
-// This bridges Privy embedded wallets into wagmi hooks (useAccount, useBalance, etc.)
 import { WagmiProvider, createConfig } from "@privy-io/wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http } from "viem";
@@ -10,7 +8,6 @@ import { somniaTestnet } from "@/lib/chain";
 
 const PRIVY_APP_ID = "cmmzi6sr1002y0ci4dmt2w88n";
 
-// Use @privy-io/wagmi's createConfig — this injects Privy wallets as wagmi connectors
 const wagmiConfig = createConfig({
   chains: [somniaTestnet],
   transports: {
@@ -18,7 +15,14 @@ const wagmiConfig = createConfig({
       timeout: 10_000,
     }),
   },
-  pollingInterval: 300, // Somnia has sub-second finality — poll aggressively
+  // Disable auto-discovery of injected wallets (EIP-6963).
+  // Coinbase Smart Wallet SDK gets auto-loaded otherwise and fails on chain 50312,
+  // corrupting wagmi connector state and breaking writeContract().
+  // Privy's embedded wallet connector is injected separately by WagmiProvider — unaffected.
+  multiInjectedProviderDiscovery: false,
+  // NOTE: pollingInterval removed from here intentionally.
+  // Setting it globally throttles Privy's internal connector sync.
+  // Fast polling (300ms) is set per-call in waitForTransactionReceipt instead.
 });
 
 const queryClient = new QueryClient();
@@ -31,6 +35,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         appearance: {
           theme: "dark",
           accentColor: "#60a5fa",
+          walletList: ["metamask", "detected_ethereum_wallets"],
         },
         defaultChain: somniaTestnet,
         supportedChains: [somniaTestnet],
@@ -38,13 +43,12 @@ export function Web3Provider({ children }: { children: ReactNode }) {
           ethereum: {
             createOnLogin: "users-without-wallets",
           },
-          showWalletUIs: false, // NO tx confirmation popup — auto-approve
+          showWalletUIs: false,
         },
         loginMethods: ["google", "email", "wallet"],
       }}
     >
       <QueryClientProvider client={queryClient}>
-        {/* MUST be inside PrivyProvider — bridges Privy wallets into wagmi */}
         <WagmiProvider config={wagmiConfig}>
           {children}
         </WagmiProvider>
