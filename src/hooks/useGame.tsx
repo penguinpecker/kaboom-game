@@ -192,8 +192,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         address: CONTRACTS.KaboomGame, abi: KaboomGameAbi, functionName: "startGame",
         args: [state.mineCount, "0x0000000000000000000000000000000000000000" as `0x${string}`],
         value: parseEther(state.bet.toString()),
-        gas: 300_000n,        // skip eth_estimateGas round-trip (~300ms)
-        gasPrice: parseGwei("6"), // skip eth_feeHistory round-trip (~260ms)
+        gas: 2_500_000n,      // startGame triggers reactive subs ~1.75M gas on-chain
+        gasPrice: parseGwei("6"), // Somnia fixed at 6 gwei
         chain: somniaTestnet,
       });
       const receipt = await publicClient.waitForTransactionReceipt({ hash, pollingInterval: 300 });
@@ -219,8 +219,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const hash = await walletClient.writeContract({
         address: CONTRACTS.KaboomGame, abi: KaboomGameAbi, functionName: "revealTile",
         args: [state.gameId!, index],
-        gas: 150_000n,        // skip eth_estimateGas round-trip (~300ms)
-        gasPrice: parseGwei("6"), // skip eth_feeHistory round-trip (~260ms)
+        gas: 400_000n,       // revealTile: max seen 266k on-chain + 50% buffer
+        gasPrice: parseGwei("6"), // Somnia fixed at 6 gwei
         chain: somniaTestnet,
       });
       // 🚀 Fast polling — Somnia has sub-second finality, don't wait 4s between polls
@@ -244,8 +244,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const hash = await walletClient.writeContract({
         address: CONTRACTS.KaboomGame, abi: KaboomGameAbi, functionName: "cashOut",
         args: [state.gameId!],
-        gas: 120_000n,        // skip eth_estimateGas round-trip (~300ms)
-        gasPrice: parseGwei("6"), // skip eth_feeHistory round-trip (~260ms)
+        gas: 400_000n,       // cashOut: conservative buffer
+        gasPrice: parseGwei("6"), // Somnia fixed at 6 gwei
         chain: somniaTestnet,
       });
       const receipt = await publicClient.waitForTransactionReceipt({ hash, pollingInterval: 300 });
