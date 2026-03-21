@@ -195,6 +195,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         chain: somniaTestnet,
       });
       const receipt = await publicClient.waitForTransactionReceipt({ hash, pollingInterval: 300 });
+      parseReceipt(receipt);
+    } catch (err: any) {
+      setState(prev => ({ ...prev, status: "idle", error: err.shortMessage || err.message?.substring(0, 100) || "Transaction failed" }));
     }
   }, [state.bet, state.mineCount, walletClient, publicClient, parseReceipt]);
 
@@ -240,6 +243,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         chain: somniaTestnet,
       });
       const receipt = await publicClient.waitForTransactionReceipt({ hash, pollingInterval: 300 });
+      parseReceipt(receipt);
+    } catch (err: any) {
+      setState(prev => ({ ...prev, status: "playing", error: err.shortMessage || err.message?.substring(0, 100) || "Cashout failed" }));
     }
   }, [state.gameId, state.status, walletClient, publicClient, parseReceipt]);
 
