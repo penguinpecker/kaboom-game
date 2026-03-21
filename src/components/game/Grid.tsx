@@ -6,7 +6,7 @@ import { GAME_CONFIG } from "@/lib/chain";
 import { useEffect } from "react";
 
 export function Grid() {
-  const { state } = useGame();
+  const { state, cashOut } = useGame();
   const { open } = useModal();
   const safeTilesTotal = GAME_CONFIG.GRID_SIZE - state.mineCount;
 
@@ -71,7 +71,7 @@ export function Grid() {
           </div>
         </div>
         {state.status === "playing" && state.safeTiles.size > 0 && (
-          <button onClick={() => {}} className="py-3 px-8 bg-surface-bright border border-primary/30 text-primary font-headline font-black text-xs tracking-widest hover:bg-primary hover:text-on-primary transition-all">
+          <button onClick={cashOut} disabled={state.status === "cashing"} className="py-3 px-8 bg-surface-bright border border-primary/30 text-primary font-headline font-black text-xs tracking-widest hover:bg-primary hover:text-on-primary transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
             EXIT &amp; WITHDRAW
           </button>
         )}
